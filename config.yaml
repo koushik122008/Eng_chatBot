@@ -1,0 +1,24 @@
+# EngiBuddy configuration
+
+# Anthropic model + generation settings
+model: claude-sonnet-4-6
+max_tokens: 8192
+
+# Subject focus for the study companion.
+# Examples: "general engineering", "ECE / VLSI design", "Mechanical engineering",
+#           "Computer Science", "Civil engineering"
+subject_focus: general engineering
+
+# Student context (used for tailoring examples and project ideas)
+branch: general
+semester: 3
+
+# Default difficulty: beginner | intermediate | advanced
+difficulty: intermediate
+
+# Socratic mode: when true, EngiBuddy gives hints first and full solutions
+# only when the student explicitly asks.
+socratic: true
+
+# Extra text appended to the system prompt (free-form, optional).
+system_prompt_extra: ""

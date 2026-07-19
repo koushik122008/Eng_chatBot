@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EngiBuddy — 3D template test harness</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #0b1020; color: #e2e8f0;
+         display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 10px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+           border-bottom: 1px solid #1e293b; }
+  header b { margin-right: 8px; }
+  button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px;
+           padding: 6px 12px; cursor: pointer; }
+  button:hover { background: #334155; }
+  #anims { padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #1e293b; }
+  #anims button { background: #14532d; border-color: #166534; }
+  #viewer { flex: 1; position: relative; min-height: 0; }
+  #viewer canvas { display: block; }
+  .scene-label { background: rgba(15, 23, 42, .85); color: #e2e8f0; padding: 2px 8px;
+                 border-radius: 4px; font-size: 12px; border: 1px solid #334155; white-space: nowrap; }
+  .viewer-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center;
+                     height: 100%; color: #94a3b8; }
+  #title { color: #7dd3fc; font-weight: 600; margin-left: auto; }
+</style>
+</head>
+<body>
+<header>
+  <b>Template test harness</b>
+  <span id="buttons"></span>
+  <span id="title"></span>
+</header>
+<div id="anims"></div>
+<div id="viewer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import { Viewer } from './js/viewer.js';
+
+const DUMMY_SPECS = {
+  'transistor (active)': {
+    v: 1, template: 'npn_transistor',
+    title: 'NPN Transistor — Active Mode', style: 'schematic',
+    params: { bias: 'active', showDepletionRegion: true },
+    labels: [
+      { id: 'emitter', text: 'Emitter (N)' },
+      { id: 'base', text: 'Base (P)' },
+      { id: 'collector', text: 'Collector (N)' },
+    ],
+    animations: [
+      { id: 'electron-flow', target: 'electrons', type: 'flow', loop: true, speed: 1 },
+      { id: 'hole-flow', target: 'holes', type: 'flow', loop: true, speed: 1 },
+      { id: 'show-depletion', target: 'depletion', type: 'highlight', loop: false },
+      { id: 'focus-base', target: 'base', type: 'pulse', loop: false },
+    ],
+    camera: { orbit: [30, 18], zoom: 1 },
+    autoplay: [],
+  },
+  'transistor (realistic, saturation)': {
+    v: 1, template: 'npn_transistor',
+    title: 'NPN Transistor — Saturation', style: 'realistic',
+    params: { bias: 'saturation', showDepletionRegion: true },
+    labels: [{ id: 'base', text: 'Base' }],
+    animations: [
+      { id: 'electron-flow', target: 'electrons', type: 'flow', loop: true, speed: 2 },
+    ],
+    camera: { orbit: [55, 25], zoom: 0.9 },
+    autoplay: ['electron-flow'],
+  },
+  'NAND gate': {
+    v: 1, template: 'logic_gate',
+    title: 'NAND Gate', style: 'schematic',
+    params: { gate: 'NAND', inputs: [1, 0] },
+    labels: [
+      { id: 'inputA', text: 'A' }, { id: 'inputB', text: 'B' },
+      { id: 'output', text: 'Y = NOT(A AND B)' },
+    ],
+    animations: [
+      { id: 'flip-a', target: 'inputA', type: 'toggle' },
+      { id: 'flip-b', target: 'inputB', type: 'toggle' },
+      { id: 'signal', target: 'output', type: 'flow', loop: true },
+      { id: 'focus-gate', target: 'gate', type: 'highlight', loop: false },
+    ],
+    camera: { orbit: [0, 12], zoom: 1.1 },
+    autoplay: ['signal'],
+  },
+  'XOR gate': {
+    v: 1, template: 'logic_gate',
+    title: 'XOR Gate', style: 'schematic',
+    params: { gate: 'XOR', inputs: [1, 1] },
+    labels: [{ id: 'output', text: 'Y = A XOR B' }],
+    animations: [
+      { id: 'flip-a', target: 'inputA', type: 'toggle' },
+      { id: 'focus-output', target: 'output', type: 'pulse', loop: false },
+    ],
+    camera: { orbit: [-15, 15], zoom: 1.1 },
+  },
+  'gear train (3 gears)': {
+    v: 1, template: 'gear_train',
+    title: 'Gear Train — 12:24:12', style: 'schematic',
+    params: { gears: [{ teeth: 12 }, { teeth: 24 }, { teeth: 12 }], rpm: 25 },
+    labels: [{ id: 'gear0', text: 'Driver (12T)' }, { id: 'gear1', text: 'Driven (24T)' }],
+    animations: [
+      { id: 'spin', target: 'gear0', type: 'rotate', loop: true },
+      { id: 'pause', target: 'gear0', type: 'toggle' },
+      { id: 'focus-driven', target: 'gear1', type: 'highlight', loop: false },
+    ],
+    camera: { orbit: [0, 10], zoom: 1 },
+    autoplay: ['spin'],
+  },
+  'spring-mass (underdamped)': {
+    v: 1, template: 'spring_mass',
+    title: 'Spring–Mass Oscillator', style: 'schematic',
+    params: { mass: 2, k: 30, damping: 0.6, initialDisplacement: 1.2 },
+    labels: [{ id: 'mass', text: 'm = 2 kg' }, { id: 'equilibrium', text: 'equilibrium' }],
+    animations: [
+      { id: 'release', target: 'mass', type: 'oscillate', loop: true },
+      { id: 'focus-spring', target: 'spring', type: 'highlight', loop: false },
+    ],
+    camera: { orbit: [20, 8], zoom: 1.1 },
+  },
+  'wave superposition': {
+    v: 1, template: 'wave',
+    title: 'Superposition: 1 Hz + 3 Hz', style: 'schematic',
+    params: {
+      mode: 'superposition',
+      waves: [
+        { type: 'sine', freq: 1, amp: 1 },
+        { type: 'sine', freq: 3, amp: 0.4 },
+      ],
+    },
+    labels: [{ id: 'source', text: 'signal' }],
+    animations: [
+      { id: 'focus-sum', target: 'sum', type: 'highlight', loop: false },
+      { id: 'focus-fundamental', target: 'wave0', type: 'highlight', loop: false },
+      { id: 'freeze', target: 'source', type: 'toggle' },
+    ],
+    camera: { orbit: [0, 12], zoom: 1 },
+  },
+};
+
+const viewer = new Viewer(document.getElementById('viewer'));
+const buttonsEl = document.getElementById('buttons');
+const animsEl = document.getElementById('anims');
+const titleEl = document.getElementById('title');
+
+document.addEventListener('scene-title', (e) => { titleEl.textContent = e.detail; });
+
+function load(name) {
+  const spec = DUMMY_SPECS[name];
+  viewer.loadScene(spec);
+  animsEl.innerHTML = '<span style="color:#94a3b8">animations:</span> ';
+  for (const anim of spec.animations || []) {
+    const b = document.createElement('button');
+    b.textContent = anim.id;
+    b.onclick = () => viewer.triggerAnim(anim.id);
+    animsEl.appendChild(b);
+  }
+}
+
+for (const name of Object.keys(DUMMY_SPECS)) {
+  const b = document.createElement('button');
+  b.textContent = name;
+  b.onclick = () => load(name);
+  buttonsEl.appendChild(b);
+}
+
+load('transistor (active)');
+window.__viewer = viewer; // for console poking
+</script>
+</body>
+</html>

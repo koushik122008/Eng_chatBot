@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py --version)",
+      "Bash(pip --version)",
+      "Bash(pip install *)",
+      "Bash(python backend/test_stream_parser.py)",
+      "Bash(python -m backend.test_stream_parser)",
+      "Bash(python -c ' *)",
+      "Bash(ant auth *)",
+      "Bash(env -u ANTHROPIC_API_KEY python -c ' *)",
+      "Bash(python -m backend.test_chat_route)",
+      "Bash(netstat -ano)",
+      "Bash(powershell -Command \"Get-Process python -ErrorAction SilentlyContinue | Select-Object Id,StartTime | Format-Table\")",
+      "Bash(/usr/bin/ls \"C:\\\\VS_Code\\\\new_project\")",
+      "Bash(/c/Windows/System32/cmd.exe /c \"dir C:\\\\VS_Code\\\\new_project /b\")"
+    ]
+  }
+}

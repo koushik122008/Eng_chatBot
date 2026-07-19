@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+engibuddy.db
+.venv/
+venv/
