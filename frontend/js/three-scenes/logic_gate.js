@@ -1,7 +1,7 @@
 // Logic gate template with clickable input switches and an output lamp.
 // params: { gate: "AND"|"OR"|"NOT"|"NAND"|"NOR"|"XOR", inputs: [0|1, (0|1)] }
 // targets: inputA, inputB, output, gate
-import { COLORS, stdMat, makeFlow } from './common.js';
+import { V3, COLORS, stdMat, makeFlow } from './common.js';
 
 const GATE_LOGIC = {
   AND: (a, b) => a & b,
@@ -35,7 +35,7 @@ function gateShape(THREE, kind) {
   return s;
 }
 
-export function build({ THREE, style, params, quality }) {
+export function build({ THREE, style, params, quality, template }) {
   const group = new THREE.Group();
   const kind = params.gate || 'AND';
   const nInputs = kind === 'NOT' ? 1 : 2;
@@ -43,7 +43,7 @@ export function build({ THREE, style, params, quality }) {
   while (state.length < nInputs) state.push(0);
   const seg = quality === 'low' ? 12 : 32;
 
-  // Gate body.
+  // Gate body (with tooltip).
   const body = new THREE.Mesh(
     new THREE.ExtrudeGeometry(gateShape(THREE, kind), {
       depth: 0.45, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05,
@@ -52,6 +52,11 @@ export function build({ THREE, style, params, quality }) {
     stdMat(0x64748b, { style }),
   );
   body.position.z = -0.22;
+  body.userData.tooltip = () => {
+    const out = compute();
+    const inStr = state.join(', ');
+    return `${kind} Gate &bull; IN(${inStr}) &rarr; OUT(<b>${out}</b>)`;
+  };
   body.userData.labelOffsetY = 1.4;
   group.add(body);
 
@@ -88,7 +93,7 @@ export function build({ THREE, style, params, quality }) {
     color: COLORS.wireOff, roughness: 0.5, metalness: 0.2,
   });
 
-  // Input switches + wires.
+  // Input switches + wires (with tooltips).
   const inputMeshes = [];
   const inputWires = [];
   const inputYs = nInputs === 1 ? [0] : [0.55, -0.55];
@@ -100,6 +105,7 @@ export function build({ THREE, style, params, quality }) {
     );
     sw.position.set(-3, y, 0);
     sw.userData.inputIndex = i;
+    sw.userData.tooltip = () => `Input ${String.fromCharCode(65 + i)}: <b>${state[i]}</b> (click to toggle)`;
     sw.userData.labelOffsetY = 0.7;
     group.add(sw);
     inputMeshes.push(sw);
@@ -111,15 +117,17 @@ export function build({ THREE, style, params, quality }) {
       wireMat(),
     );
     wire.userData.inputIndex = i;
+    wire.userData.tooltip = () => `Wire ${String.fromCharCode(65 + i)}: <b>${state[i]}</b>`;
     group.add(wire);
     inputWires.push(wire);
   }
 
-  // Output wire + lamp.
+  // Output wire + lamp (with tooltips).
   const outWire = new THREE.Mesh(
     new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V3(outStartX, 0), V3(2.5, 0)]), 8, 0.05, 8),
     wireMat(),
   );
+  outWire.userData.tooltip = () => `Output: <b>${compute()}</b>`;
   group.add(outWire);
 
   const lamp = new THREE.Mesh(
@@ -127,6 +135,7 @@ export function build({ THREE, style, params, quality }) {
     stdMat(COLORS.lampOff, { style, emissive: COLORS.lampOn }),
   );
   lamp.position.set(3, 0, 0);
+  lamp.userData.tooltip = () => `Output: <b>${compute()}</b> (${compute() ? 'HIGH' : 'LOW'})`;
   lamp.userData.labelOffsetY = 0.75;
   group.add(lamp);
 

@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from backend import claude_client, db
+from backend import db, groq_client
 from backend.scene_schema import SceneValidationError, validate_scene
 
 router = APIRouter()
@@ -48,13 +48,13 @@ def chat(req: ChatRequest):
         scene_spec: dict | None = None
         failed = False
 
-        for kind, value in claude_client.stream_reply(history):
+        for kind, value in groq_client.stream_reply(history):
             if kind == "text":
                 text_parts.append(value)
                 yield _sse("text", {"delta": value})
             elif kind == "scene_json":
                 try:
-                    scene_spec = validate_scene(claude_client.parse_scene_json(value))
+                    scene_spec = validate_scene(groq_client.parse_scene_json(value))
                     yield _sse("scene", {"spec": scene_spec})
                 except (ValueError, SceneValidationError) as e:
                     yield _sse("error", {"message": f"scene rejected: {e}"})

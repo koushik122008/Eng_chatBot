@@ -2,6 +2,9 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
+// Vector3 shorthand — needs THREE imported at the top of common.js
+export const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+
 export const COLORS = {
   nType: 0x3b82f6,     // blue
   pType: 0xf97316,     // orange
@@ -15,22 +18,56 @@ export const COLORS = {
   lampOff: 0x374151,
 };
 
-export function stdMat(color, { style = 'schematic', opacity = 1, emissive = 0x000000 } = {}) {
+export function stdMat(color, { style = 'schematic', opacity = 1, emissive = 0x000000, roughness, metalness } = {}) {
   const realistic = style === 'realistic';
   return new THREE.MeshStandardMaterial({
     color,
-    roughness: realistic ? 0.35 : 0.8,
-    metalness: realistic ? 0.5 : 0.05,
+    roughness: roughness ?? (realistic ? 0.3 : 0.8),
+    metalness: metalness ?? (realistic ? 0.55 : 0.05),
     transparent: opacity < 1,
     opacity,
     emissive,
-    emissiveIntensity: 0,
+    emissiveIntensity: realistic ? 0.08 : 0,
   });
+}
+
+// Environment sphere for realistic backgrounds
+export function makeEnvironment(THREE, style) {
+  if (style !== 'realistic') return null;
+  const env = new THREE.Mesh(
+    new THREE.SphereGeometry(18, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshBasicMaterial({
+      color: 0x1a2744,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.6,
+    })
+  );
+  env.position.y = -1;
+  return env;
+}
+
+// Floor plane with subtle reflection for realistic mode
+export function makeFloor(THREE, style) {
+  if (style !== 'realistic') return null;
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 14),
+    new THREE.MeshStandardMaterial({
+      color: 0x0a1020,
+      roughness: 0.7,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.4,
+    })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -2.0;
+  return floor;
 }
 
 // Particle stream flowing along a THREE.Curve. Returned object plugs into the
 // viewer's "flow" animation type: set .active / .speed, call .update(dt).
-export function makeFlow(curve, { count = 24, color = COLORS.electron, size = 0.09, rate = 0.25 } = {}) {
+export function makeFlow(curve, { count = 24, color = COLORS.electron, size = 0.09, rate = 0.25, tooltip } = {}) {
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(count * 3);
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -40,6 +77,7 @@ export function makeFlow(curve, { count = 24, color = COLORS.electron, size = 0.
   const points = new THREE.Points(geometry, material);
   points.visible = false;
   points.frustumCulled = false;
+  if (tooltip) points.userData.tooltip = tooltip;
 
   const offsets = Array.from({ length: count }, (_, i) => i / count);
 

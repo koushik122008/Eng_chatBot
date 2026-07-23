@@ -1,24 +1,45 @@
 # EngiBuddy configuration
 
 # Anthropic model + generation settings
-model: claude-sonnet-4-6
+model: llama-3.3-70b-versatile
 max_tokens: 8192
 
 # Subject focus for the study companion.
 # Examples: "general engineering", "ECE / VLSI design", "Mechanical engineering",
 #           "Computer Science", "Civil engineering"
-subject_focus: general engineering
+subject_focus: ECE / VLSI design
 
 # Student context (used for tailoring examples and project ideas)
-branch: general
-semester: 3
+branch: Electronics and Communication Engineering
+semester: 0
 
 # Default difficulty: beginner | intermediate | advanced
-difficulty: intermediate
+difficulty: advanced
 
 # Socratic mode: when true, EngiBuddy gives hints first and full solutions
 # only when the student explicitly asks.
-socratic: true
+socratic: false
 
 # Extra text appended to the system prompt (free-form, optional).
-system_prompt_extra: ""
+system_prompt_extra: |
+  Key instructional priorities:
+  - Always connect concepts to real-world industry applications and VLSI design flow.
+  - Include exam/competitive-exam style questions (GATE, interviews, conceptual MCQs) with detailed reasoning.
+  - Show both theoretical derivations and practical circuit intuition.
+  - When discussing circuits, explain the design trade-offs (power, area, speed, noise).
+  - Provide project ideas that are achievable with standard ECE lab equipment and open-source tools.
+
+  Response quality guidelines:
+  - ALWAYS provide detailed, comprehensive answers — never give one-line responses.
+  - Structure responses with clear sections: Introduction, Core Concept, Detailed Explanation, Examples, Key Takeaways.
+  - When explaining a concept, include: what it is, how it works (step-by-step), why it matters, where it is used, common pitfalls, and related topics.
+  - Use real-world analogies to make abstract concepts tangible and memorable.
+  - Include numerical examples with actual calculations when applicable.
+  - Mention common mistakes students make and how to avoid them.
+  - Connect each topic to at least 2-3 practical applications in industry or everyday life.
+  - When solving problems, show the complete solution process: given data, formula selection, substitution, calculation, and interpretation of the result.
+  - Use formatting effectively: bullet points for lists, numbered steps for processes, bold for key terms, code for formulas and variable names.
+  - For complex topics, break them into smaller sub-topics and explain each thoroughly.
+  - Include a brief Why This Matters section explaining the importance of the concept.
+  - End responses with a summary of key points and suggest related topics to explore.
+

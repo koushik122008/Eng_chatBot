@@ -3,52 +3,120 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EngiBuddy — 3D template test harness</title>
+<title>EngiBuddy — 3D template viewer (all 100+ templates)</title>
 <style>
   body { margin: 0; font-family: system-ui, sans-serif; background: #0b1020; color: #e2e8f0;
          display: flex; flex-direction: column; height: 100vh; }
-  header { padding: 10px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-           border-bottom: 1px solid #1e293b; }
-  header b { margin-right: 8px; }
-  button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px;
-           padding: 6px 12px; cursor: pointer; }
-  button:hover { background: #334155; }
-  #anims { padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #1e293b; }
-  #anims button { background: #14532d; border-color: #166534; }
-  #viewer { flex: 1; position: relative; min-height: 0; }
+  header { padding: 6px 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+           border-bottom: 1px solid #1e293b; flex-shrink: 0; }
+  header b { margin-right: 4px; font-size: 14px; color: #38bdf8; }
+  #buttons { display: flex; gap: 4px; flex-wrap: wrap; }
+  #buttons button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 5px;
+           padding: 3px 8px; cursor: pointer; font-size: 11px; }
+  #buttons button:hover { background: #334155; }
+  #buttons button.active { background: #0ea5e9; border-color: #38bdf8; color: #fff; }
+  #count { font-size: 11px; color: #64748b; }
+  #viewer-title { color: #7dd3fc; font-weight: 600; margin-left: auto; font-size: 13px; white-space: nowrap; }
+  #main { display: flex; flex: 1; min-height: 0; }
+  #cat-list { width: 170px; border-right: 1px solid #1e293b; overflow-y: auto; flex-shrink: 0; }
+  #cat-list .cat-item { display: block; width: 100%; text-align: left; padding: 7px 10px;
+    background: none; border: none; border-bottom: 1px solid #0f172a;
+    color: #94a3b8; cursor: pointer; font-size: 11px; }
+  #cat-list .cat-item:hover { background: #1e293b; color: #e2e8f0; }
+  #cat-list .cat-item.active { background: #0f172a; color: #38bdf8; border-left: 3px solid #38bdf8; font-weight: 600; }
+  #tmpl-grid { width: 220px; overflow-y: auto; padding: 6px; border-right: 1px solid #1e293b; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; }
+  #tmpl-grid .t-btn { background: #16213b; color: #cbd5e1; border: 1px solid #1e293b; border-radius: 4px;
+    padding: 5px 8px; cursor: pointer; font-size: 10px; text-align: left; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; }
+  #tmpl-grid .t-btn:hover { background: #1e293b; border-color: #38bdf8; }
+  #tmpl-grid .t-btn.active { background: #0c4a6e; border-color: #0ea5e9; color: #fff; }
+  #viewer-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #info-panel { padding: 5px 10px; background: #0f172a; border-bottom: 1px solid #1e293b;
+    font-size: 11px; color: #94a3b8; flex-shrink: 0; }
+  #info-panel .cat-badge { display: inline-block; background: #0ea5e9; color: #fff; font-size: 9px;
+    padding: 1px 7px; border-radius: 999px; text-transform: uppercase; font-weight: 600; margin-right: 6px; }
+  #info-panel .name { color: #e2e8f0; font-weight: 600; font-size: 12px; }
+  #info-panel .desc { color: #94a3b8; }
+  #info-panel .detail { font-size: 10px; }
+  #info-panel .detail b { color: #38bdf8; }
+  #anims { padding: 3px 10px; display: flex; gap: 3px; flex-wrap: wrap; border-bottom: 1px solid #1e293b;
+           flex-shrink: 0; min-height: 28px; align-items: center; }
+  #anims button { background: #14532d; border: 1px solid #166534; border-radius: 4px;
+    padding: 2px 7px; font-size: 10px; cursor: pointer; color: #bbf7d0; }
+  #anims .hint { color: #64748b; font-size: 11px; }
+  #viewer { flex: 1; position: relative; min-height: 0; background: #0b1020; }
   #viewer canvas { display: block; }
-  .scene-label { background: rgba(15, 23, 42, .85); color: #e2e8f0; padding: 2px 8px;
-                 border-radius: 4px; font-size: 12px; border: 1px solid #334155; white-space: nowrap; }
+  .scene-label { background: rgba(15, 23, 42, .85); color: #e2e8f0; padding: 2px 7px;
+                 border-radius: 4px; font-size: 11px; border: 1px solid #334155; white-space: nowrap; }
   .viewer-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center;
                      height: 100%; color: #94a3b8; }
-  #title { color: #7dd3fc; font-weight: 600; margin-left: auto; }
+  /* Responsive */
+  @media (max-width: 900px) {
+    #cat-list { width: 120px; }
+    #tmpl-grid { width: 160px; }
+    #tmpl-grid .t-btn { font-size: 9px; padding: 3px 6px; }
+  }
 </style>
 </head>
 <body>
 <header>
-  <b>Template test harness</b>
-  <span id="buttons"></span>
-  <span id="title"></span>
+  <b>🧊 EngiBuddy 3D Viewer</b>
+  <span id="count"></span>
+  <span id="viewer-title"></span>
 </header>
-<div id="anims"></div>
-<div id="viewer"></div>
+<div id="main">
+  <div id="cat-list"></div>
+  <div id="tmpl-grid"></div>
+  <div id="viewer-col">
+    <div id="info-panel">Select a template from the left</div>
+    <div id="anims"><span class="hint">No animations loaded</span></div>
+    <div id="viewer"></div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script type="importmap">
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "./js/three-scenes/registry.js": "./js/three-scenes/registry.js?v=1"
   }
 }
 </script>
+
 <script type="module">
 import { Viewer } from './js/viewer.js';
 
-const DUMMY_SPECS = {
-  'transistor (active)': {
-    v: 1, template: 'npn_transistor',
-    title: 'NPN Transistor — Active Mode', style: 'schematic',
+const viewer = new Viewer(document.getElementById('viewer'));
+const catList = document.getElementById('cat-list');
+const tmplGrid = document.getElementById('tmpl-grid');
+const infoEl = document.getElementById('info-panel');
+const animsEl = document.getElementById('anims');
+const titleEl = document.getElementById('viewer-title');
+const countEl = document.getElementById('count');
+
+document.addEventListener('scene-title', (e) => { titleEl.textContent = e.detail; });
+
+// Original 8 template names (have their own builders)
+const ORIGINAL_NAMES = ['npn_transistor','logic_gate','gear_train','spring_mass','wave','mosfet','opamp','rlc_filter'];
+
+// Map template names to the type parameter expected by the category builder
+const TYPE_MAP = {
+  // Rectifiers (template name → builder type param)
+  half_wave_rectifier: 'half_wave',
+  full_wave_ct_rectifier: 'full_wave_ct',
+  full_wave_bridge: 'full_wave_bridge',
+  precision_rectifier: 'precision',
+  voltage_doubler: 'voltage_doubler',
+  three_phase_rectifier: 'three_phase',
+  // Amplifier special cases
+  cascode_amplifier: 'cascode',
+};
+
+// Additional specs for original templates with rich animations
+const EXTRA_SPECS = {
+  npn_transistor: {
     params: { bias: 'active', showDepletionRegion: true },
     labels: [
       { id: 'emitter', text: 'Emitter (N)' },
@@ -62,22 +130,8 @@ const DUMMY_SPECS = {
       { id: 'focus-base', target: 'base', type: 'pulse', loop: false },
     ],
     camera: { orbit: [30, 18], zoom: 1 },
-    autoplay: [],
   },
-  'transistor (realistic, saturation)': {
-    v: 1, template: 'npn_transistor',
-    title: 'NPN Transistor — Saturation', style: 'realistic',
-    params: { bias: 'saturation', showDepletionRegion: true },
-    labels: [{ id: 'base', text: 'Base' }],
-    animations: [
-      { id: 'electron-flow', target: 'electrons', type: 'flow', loop: true, speed: 2 },
-    ],
-    camera: { orbit: [55, 25], zoom: 0.9 },
-    autoplay: ['electron-flow'],
-  },
-  'NAND gate': {
-    v: 1, template: 'logic_gate',
-    title: 'NAND Gate', style: 'schematic',
+  logic_gate: {
     params: { gate: 'NAND', inputs: [1, 0] },
     labels: [
       { id: 'inputA', text: 'A' }, { id: 'inputB', text: 'B' },
@@ -90,35 +144,17 @@ const DUMMY_SPECS = {
       { id: 'focus-gate', target: 'gate', type: 'highlight', loop: false },
     ],
     camera: { orbit: [0, 12], zoom: 1.1 },
-    autoplay: ['signal'],
   },
-  'XOR gate': {
-    v: 1, template: 'logic_gate',
-    title: 'XOR Gate', style: 'schematic',
-    params: { gate: 'XOR', inputs: [1, 1] },
-    labels: [{ id: 'output', text: 'Y = A XOR B' }],
-    animations: [
-      { id: 'flip-a', target: 'inputA', type: 'toggle' },
-      { id: 'focus-output', target: 'output', type: 'pulse', loop: false },
-    ],
-    camera: { orbit: [-15, 15], zoom: 1.1 },
-  },
-  'gear train (3 gears)': {
-    v: 1, template: 'gear_train',
-    title: 'Gear Train — 12:24:12', style: 'schematic',
+  gear_train: {
     params: { gears: [{ teeth: 12 }, { teeth: 24 }, { teeth: 12 }], rpm: 25 },
     labels: [{ id: 'gear0', text: 'Driver (12T)' }, { id: 'gear1', text: 'Driven (24T)' }],
     animations: [
       { id: 'spin', target: 'gear0', type: 'rotate', loop: true },
-      { id: 'pause', target: 'gear0', type: 'toggle' },
       { id: 'focus-driven', target: 'gear1', type: 'highlight', loop: false },
     ],
     camera: { orbit: [0, 10], zoom: 1 },
-    autoplay: ['spin'],
   },
-  'spring-mass (underdamped)': {
-    v: 1, template: 'spring_mass',
-    title: 'Spring–Mass Oscillator', style: 'schematic',
+  spring_mass: {
     params: { mass: 2, k: 30, damping: 0.6, initialDisplacement: 1.2 },
     labels: [{ id: 'mass', text: 'm = 2 kg' }, { id: 'equilibrium', text: 'equilibrium' }],
     animations: [
@@ -127,54 +163,171 @@ const DUMMY_SPECS = {
     ],
     camera: { orbit: [20, 8], zoom: 1.1 },
   },
-  'wave superposition': {
-    v: 1, template: 'wave',
-    title: 'Superposition: 1 Hz + 3 Hz', style: 'schematic',
-    params: {
-      mode: 'superposition',
-      waves: [
-        { type: 'sine', freq: 1, amp: 1 },
-        { type: 'sine', freq: 3, amp: 0.4 },
-      ],
-    },
+  wave: {
+    params: { mode: 'superposition', waves: [{ type: 'sine', freq: 1, amp: 1 }, { type: 'sine', freq: 3, amp: 0.4 }] },
     labels: [{ id: 'source', text: 'signal' }],
     animations: [
       { id: 'focus-sum', target: 'sum', type: 'highlight', loop: false },
-      { id: 'focus-fundamental', target: 'wave0', type: 'highlight', loop: false },
       { id: 'freeze', target: 'source', type: 'toggle' },
+    ],
+    camera: { orbit: [0, 12], zoom: 1 },
+  },
+  mosfet: {
+    title: 'NMOS Transistor',
+    params: { type: 'nmos', vgs: 3, vds: 2 },
+    labels: [{ id: 'gate', text: 'Gate' }, { id: 'source', text: 'Source' }, { id: 'drain', text: 'Drain' }],
+    animations: [
+      { id: 'channel-flow', target: 'electrons', type: 'flow', loop: true, speed: 1 },
+      { id: 'focus-gate', target: 'gate', type: 'highlight', loop: false },
+    ],
+    camera: { orbit: [25, 15], zoom: 1.1 },
+  },
+  opamp: {
+    params: { config: 'inverting', r1: 10, r2: 100, inputVoltage: 1 },
+    labels: [{ id: 'opamp_body', text: 'Op-Amp' }, { id: 'output', text: 'Vout' }],
+    animations: [
+      { id: 'signal-flow', target: 'signal_flow', type: 'flow', loop: true, speed: 1 },
+      { id: 'focus-feedback', target: 'feedback', type: 'highlight', loop: false },
+    ],
+    camera: { orbit: [10, 12], zoom: 0.85 },
+  },
+  rlc_filter: {
+    params: { type: 'series_rlc', r: 100, l: 10, c: 1, frequency: 50 },
+    labels: [{ id: 'resistor', text: 'R' }, { id: 'inductor', text: 'L' }, { id: 'capacitor', text: 'C' }],
+    animations: [
+      { id: 'current-flow', target: 'rlc_loop', type: 'flow', loop: true, speed: 1 },
+      { id: 'focus-resonance', target: 'resonance_indicator', type: 'highlight', loop: false },
     ],
     camera: { orbit: [0, 12], zoom: 1 },
   },
 };
 
-const viewer = new Viewer(document.getElementById('viewer'));
-const buttonsEl = document.getElementById('buttons');
-const animsEl = document.getElementById('anims');
-const titleEl = document.getElementById('title');
+// Build category index from templateMeta
+// Dynamically import templateMeta to avoid stale ES module cache issues
+const { templateMeta: metaDb } = await import('./js/three-scenes/registry.js?v=' + Date.now());
 
-document.addEventListener('scene-title', (e) => { titleEl.textContent = e.detail; });
+const categories = {};
+for (const [name, meta] of Object.entries(metaDb)) {
+  const cat = meta.category || 'Other';
+  if (!categories[cat]) categories[cat] = [];
+  categories[cat].push(name);
+}
+const sortedCats = Object.keys(categories).sort();
+const totalTemplates = Object.keys(metaDb).length;
+countEl.textContent = `${totalTemplates} templates · ${sortedCats.length} categories`;
 
-function load(name) {
-  const spec = DUMMY_SPECS[name];
-  viewer.loadScene(spec);
-  animsEl.innerHTML = '<span style="color:#94a3b8">animations:</span> ';
-  for (const anim of spec.animations || []) {
-    const b = document.createElement('button');
-    b.textContent = anim.id;
-    b.onclick = () => viewer.triggerAnim(anim.id);
-    animsEl.appendChild(b);
+// Build category sidebar
+sortedCats.forEach(cat => {
+  const btn = document.createElement('button');
+  btn.className = 'cat-item';
+  btn.textContent = `${cat} (${categories[cat].length})`;
+  btn.onclick = () => showCategory(cat);
+  catList.appendChild(btn);
+});
+
+// Generate a scene spec for any template name
+function buildSpec(name) {
+  const meta = metaDb[name];
+  const extra = EXTRA_SPECS[name];
+  const cat = meta?.category || '';
+
+  // Human-readable title
+  const title = extra?.title || meta?.name ||
+    name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+  const spec = {
+    v: 1,
+    template: name,
+    title,
+    style: 'schematic',
+    params: { showLabels: true },
+    labels: [],
+    animations: [],
+    camera: { orbit: [30, 15], zoom: 1 },
+  };
+
+  // Apply extra specs for original templates
+  if (extra) {
+    Object.assign(spec, extra);
+    spec.params = { ...spec.params, ...extra.params };
+  }
+
+  // For category templates, add type parameter needed by the builder
+  if (!ORIGINAL_NAMES.includes(name) && !extra) {
+    spec.params.type = TYPE_MAP[name] || name;
+  }
+
+  return spec;
+}
+
+function showCategory(cat) {
+  // Highlight active category
+  catList.querySelectorAll('.cat-item').forEach(b => b.classList.remove('active'));
+  catList.querySelectorAll('.cat-item').forEach(b => {
+    if (b.textContent.startsWith(cat)) b.classList.add('active');
+  });
+
+  // Render template buttons
+  tmplGrid.innerHTML = '';
+  const templates = categories[cat].sort();
+
+  templates.forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 't-btn';
+    const meta = metaDb[name];
+    btn.textContent = meta?.name || name;
+    btn.title = `template: ${name}`;
+    btn.onclick = () => {
+      tmplGrid.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadTemplate(name);
+    };
+    tmplGrid.appendChild(btn);
+  });
+
+  // Auto-select first template
+  if (templates.length > 0) {
+    tmplGrid.querySelector('.t-btn')?.classList.add('active');
+    loadTemplate(templates[0]);
   }
 }
 
-for (const name of Object.keys(DUMMY_SPECS)) {
-  const b = document.createElement('button');
-  b.textContent = name;
-  b.onclick = () => load(name);
-  buttonsEl.appendChild(b);
+function loadTemplate(name) {
+  const spec = buildSpec(name);
+  viewer.loadScene(spec);
+
+  // Info panel
+  const meta = metaDb[name];
+  if (meta) {
+    infoEl.innerHTML = `
+      <span class="cat-badge">${meta.category || ''}</span>
+      <span class="name">${meta.name || name}</span>
+      <div class="desc">${meta.desc || ''}</div>
+      <div class="detail"><b>Purpose:</b> ${meta.purpose || ''}</div>
+      <div class="detail"><b>Usage:</b> ${meta.usage || ''}</div>`;
+  } else {
+    infoEl.innerHTML = `<span style="color:#64748b">template: ${name}</span>`;
+  }
+
+  // Animation buttons
+  animsEl.innerHTML = '';
+  const anims = spec.animations || [];
+  if (anims.length > 0) {
+    anims.forEach(anim => {
+      const btn = document.createElement('button');
+      btn.textContent = `▶ ${anim.id}`;
+      btn.onclick = () => viewer.triggerAnim(anim.id);
+      animsEl.appendChild(btn);
+    });
+  } else {
+    animsEl.innerHTML = '<span class="hint">No animations defined</span>';
+  }
 }
 
-load('transistor (active)');
-window.__viewer = viewer; // for console poking
+// Auto-select first category
+if (sortedCats.length > 0) showCategory(sortedCats[0]);
+
+window.__viewer = viewer;
 </script>
 </body>
 </html>

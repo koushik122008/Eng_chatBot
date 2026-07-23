@@ -4,7 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EngiBuddy — 3D study companion</title>
-<link rel="stylesheet" href="css/style.css">
+<!-- PWA / manifest -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0ea5e9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EngiBuddy">
+<link rel="apple-touch-icon" href="icons/apple-icon-180.png">
+<link rel="icon" type="image/png" sizes="196x196" href="icons/favicon-196.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">  <link rel="stylesheet" href="css/component_properties.css">
+  <link rel="stylesheet" href="css/typing_indicator.css">
+  <link rel="stylesheet" href="css/onboarding.css">
 </head>
 <body>
 <div id="app">
@@ -13,8 +24,14 @@
   <aside id="sidebar">
     <div class="sidebar-head">
       <span class="logo">⚡ EngiBuddy</span>
-      <button id="new-chat" title="New chat">＋</button>
+      <div style="display:flex;gap:4px;">
+        <button id="export-btn" title="Export chat as Markdown">📥</button>
+        <button id="theme-toggle" title="Toggle theme">🌙</button>
+        <button id="new-chat" title="New chat (Ctrl+Shift+N)">＋</button>
+      </div>
     </div>
+    <input id="session-search" type="search" placeholder="🔍 Search sessions…" autocomplete="off">
+    <button id="gallery-btn" title="Browse all 3D models (G)">🧊 Browse Models</button>
     <nav id="session-list"></nav>
     <footer id="sidebar-foot"></footer>
   </aside>
@@ -32,6 +49,10 @@
           <button class="starter">Show me a NAND gate I can play with</button>
           <button class="starter">How do gear ratios work? Show me</button>
           <button class="starter">Explain simple harmonic motion with a spring</button>
+          <button class="starter">Show me a CMOS inverter cross-section</button>
+          <button class="starter">Explain an inverting op-amp circuit in 3D</button>
+          <button class="starter">Visualize a series RLC circuit resonance</button>
+          <button class="starter">How does a low-pass RC filter work?</button>
         </div>
       </div>
     </div>
@@ -52,19 +73,131 @@
     </form>
   </main>
 
-  <!-- 3D pane -->
-  <section id="viewer-pane">
+  <!-- 3D pane (swipeable bottom sheet on mobile) -->
+  <section id="viewer-pane" data-sheet="closed">
+    <div class="sheet-handle"><div class="sheet-handle-bar"></div></div>
     <div id="viewer-head">
       <span id="scene-title">3D view</span>
       <span class="viewer-controls">
+        <button id="builder-toggle" title="Circuit Builder">⚡ Build</button>
         <button id="lowpoly-toggle" title="Toggle low-power rendering">⚙ quality</button>
         <button id="viewer-close" title="Hide 3D view">✕</button>
       </span>
+    </div>
+    <!-- Info panel: shows purpose/usage of the current template -->
+    <div id="info-panel" hidden>
+      <button id="info-toggle" title="Toggle details">ℹ️</button>
+      <div id="info-content">
+        <div id="info-category"></div>
+        <div id="info-name"></div>
+        <div id="info-desc"></div>
+        <div id="info-purpose"><b>Purpose:</b> <span></span></div>
+        <div id="info-usage"><b>Usage:</b> <span></span></div>
+      </div>
     </div>
     <div id="viewer"></div>
     <div id="viewer-hint">drag to rotate · scroll / pinch to zoom · click switches to toggle</div>
   </section>
   <button id="viewer-open" hidden>🧊 3D view</button>
+
+  <!-- Onboarding Overlay (hidden by default) -->
+  <div id="onboarding-overlay" class="onboarding-overlay" style="display:none;">
+    <div class="onboarding-card">
+      <div class="onb-header">
+        <div class="onb-header-icon">⚡</div>
+        <h2>Welcome to EngiBuddy!</h2>
+        <p>Your AI-powered 3D engineering study companion.<br>Let's take a quick tour.</p>
+      </div>
+      <div class="onb-steps">
+        <!-- Step 1: Keyboard Shortcuts -->
+        <div class="onb-step active" data-step="0">
+          <div class="onb-step-title"><span class="step-icon">⌨️</span> Keyboard Shortcuts</div>
+          <div class="onb-shortcuts">
+            <div class="onb-shortcut">
+              <span class="onb-kbd"><kbd>Ctrl</kbd><kbd>K</kbd></span>
+              <span class="onb-shortcut-desc"><b>Browse</b> all 3D models</span>
+            </div>
+            <div class="onb-shortcut">
+              <span class="onb-kbd"><kbd>Ctrl</kbd><kbd>⇧</kbd><kbd>N</kbd></span>
+              <span class="onb-shortcut-desc"><b>New</b> chat session</span>
+            </div>
+            <div class="onb-shortcut">
+              <span class="onb-kbd"><kbd>G</kbd></span>
+              <span class="onb-shortcut-desc"><b>Gallery</b> (when not typing)</span>
+            </div>
+            <div class="onb-shortcut">
+              <span class="onb-kbd"><kbd>/</kbd></span>
+              <span class="onb-shortcut-desc"><b>Search</b> sessions</span>
+            </div>
+            <div class="onb-shortcut">
+              <span class="onb-kbd"><kbd>Ctrl</kbd><kbd>E</kbd></span>
+              <span class="onb-shortcut-desc"><b>Export</b> chat as Markdown</span>
+            </div>
+            <div class="onb-shortcut">
+              <span class="onb-kbd"><kbd>Esc</kbd></span>
+              <span class="onb-shortcut-desc"><b>Close</b> gallery / panels</span>
+            </div>
+          </div>
+        </div>
+        <!-- Step 2: 3D Viewer -->
+        <div class="onb-step" data-step="1">
+          <div class="onb-step-title"><span class="step-icon">🧊</span> Interactive 3D Viewer</div>
+          <div class="onb-features">
+            <div class="onb-feature">
+              <span class="onb-feature-icon">🖱️</span>
+              <span class="onb-feature-text"><b>Drag</b> to rotate the model, <b>scroll</b> to zoom in/out, and <b>right-click drag</b> to pan.</span>
+            </div>
+            <div class="onb-feature">
+              <span class="onb-feature-icon">👆</span>
+              <span class="onb-feature-text"><b>Click</b> on any component to see its real-world specs, pinout, and applications.</span>
+            </div>
+            <div class="onb-feature">
+              <span class="onb-feature-icon">⚡</span>
+              <span class="onb-feature-text"><b>Electron flow</b> toggle shows animated current/particle flow through the circuit.</span>
+            </div>
+            <div class="onb-feature">
+              <span class="onb-feature-icon">🔧</span>
+              <span class="onb-feature-text"><b>Circuit Builder</b> lets you place components and simulate circuits interactively.</span>
+            </div>
+          </div>
+        </div>
+        <!-- Step 3: Chat Features -->
+        <div class="onb-step" data-step="2">
+          <div class="onb-step-title"><span class="step-icon">💬</span> Smart Chat Features</div>
+          <div class="onb-features">
+            <div class="onb-feature">
+              <span class="onb-feature-icon">🎯</span>
+              <span class="onb-feature-text">Ask about <b>any engineering concept</b> and get detailed explanations with live 3D models.</span>
+            </div>
+            <div class="onb-feature">
+              <span class="onb-feature-icon">📝</span>
+              <span class="onb-feature-text">Use <b>Quick Actions</b> below the chat for practice problems, summaries, and project ideas.</span>
+            </div>
+            <div class="onb-feature">
+              <span class="onb-feature-icon">🌙</span>
+              <span class="onb-feature-text"><b>Theme toggle</b> (top-left) switches between dark and light mode. Your choice is saved.</span>
+            </div>
+            <div class="onb-feature">
+              <span class="onb-feature-icon">📥</span>
+              <span class="onb-feature-text"><b>Export</b> your chat as a clean Markdown file for revision notes.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="onb-progress">
+        <div class="onb-dot active" data-dot="0"></div>
+        <div class="onb-dot" data-dot="1"></div>
+        <div class="onb-dot" data-dot="2"></div>
+      </div>
+      <div class="onb-footer">
+        <button class="onb-skip" id="onb-skip">Skip tour</button>
+        <div class="onb-nav">
+          <button class="onb-btn onb-btn-back" id="onb-back" style="display:none;">Back</button>
+          <button class="onb-btn onb-btn-next" id="onb-next">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -73,10 +206,13 @@
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "./js/three-scenes/registry.js": "./js/three-scenes/registry.js?v=3"
   }
 }
 </script>
+<!-- Production API URL for Capacitor mobile builds: -->
+<script>window.ENGIBUDDY_API_URL = 'https://engibuddy.onrender.com';</script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
