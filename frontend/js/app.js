@@ -972,6 +972,16 @@ function initOnboarding() {
   document.addEventListener('keydown', _escHandler);
 }
 
+/* ---------------- Service Worker Registration ---------------- */
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // Service worker registration failed — PWA features won't be available
+    });
+  });
+}
+
 /* ---------------- init ---------------- */
 
 (async function init() {

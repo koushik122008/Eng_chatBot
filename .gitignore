@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.db
 engibuddy.db
+*.keystore
 .venv/
 venv/
 
@@ -18,3 +19,4 @@ ios/
 .gradle/
 *.apk
 dist/
+frontend/downloads/
