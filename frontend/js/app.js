@@ -975,11 +975,71 @@ function initOnboarding() {
 /* ---------------- Service Worker Registration ---------------- */
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service worker registration failed — PWA features won't be available
-    });
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      console.log('SW registered');
+      // Try to subscribe to push after registration
+      initPushSubscription(reg);
+    } catch {
+      // Service worker registration failed
+    }
   });
+}
+
+/* ---------------- Push Notification Subscription ---------------- */
+
+async function initPushSubscription(reg) {
+  // Guard: Push API not available in this browser
+  if (!('PushManager' in window)) return;
+
+  try {
+    // Check if already subscribed
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) {
+      // Already subscribed — verify on server
+      return;
+    }
+
+    // Get the VAPID public key from the server
+    const resp = await fetch(api('/api/push/vapid-public-key'));
+    const data = await resp.json();
+    if (!data.publicKey) return; // VAPID not configured on server
+
+    // Convert base64url public key to Uint8Array
+    const key = urlBase64ToUint8Array(data.publicKey);
+
+    // Ask for notification permission
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    // Subscribe to push
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: key,
+    });
+
+    // Send subscription to the server
+    await fetch(api('/api/push/subscribe'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+
+    console.log('Push subscription saved');
+  } catch (err) {
+    console.warn('Push subscription failed:', err.message);
+  }
+}
+
+/** Convert a base64url string to a Uint8Array (needed by pushManager.subscribe). */
+function urlBase64ToUint8Array(base64url) {
+  const padding = '='.repeat((4 - base64url.length % 4) % 4);
+  const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = window.atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
 }
 
 /* ---------------- init ---------------- */

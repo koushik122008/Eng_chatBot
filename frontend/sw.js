@@ -43,6 +43,60 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+/* ---------------- Push Notifications ---------------- */
+
+self.addEventListener('push', event => {
+  let data = { title: 'EngiBuddy', body: 'You have a new message!' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body || 'You have a new message!',
+    icon: '/icons/manifest-icon-192.maskable.png',
+    badge: '/icons/favicon-196.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || '/',
+      dateOfArrival: Date.now(),
+    },
+    requireInteraction: true,
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'EngiBuddy', options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      // Focus existing tab if already open
+      for (const client of windowClients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus().then(client => client.navigate(urlToOpen));
+        }
+      }
+      // Otherwise open new tab
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
+self.addEventListener('notificationclose', event => {
+  // Notification dismissed without clicking — can track analytics here
+});
+
 // Network-first for API calls, cache-first for static assets
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);

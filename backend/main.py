@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from starlette.responses import Response
 from starlette.types import Scope
 
@@ -14,6 +15,7 @@ load_dotenv(ROOT / ".env")
 
 from backend import db  # noqa: E402
 from backend.routes.chat import router as chat_router  # noqa: E402
+from backend.routes.push import router as push_router  # noqa: E402
 
 app = FastAPI(title="EngiBuddy")
 
@@ -27,11 +29,19 @@ app.add_middleware(
 
 db.init_db()
 app.include_router(chat_router, prefix="/api")
+app.include_router(push_router, prefix="/api")
 
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/download")
+async def download_page():
+    """Serve the APK download page."""
+    html_path = ROOT / "frontend" / "download.html"
+    return FileResponse(str(html_path))
 
 
 is_prod = os.environ.get("RENDER") is not None

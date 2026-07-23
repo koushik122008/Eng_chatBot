@@ -6,3 +6,4 @@ pydantic
 PyYAML
 jsonschema
 psycopg2-binary>=2.9
+pywebpush>=1.14
