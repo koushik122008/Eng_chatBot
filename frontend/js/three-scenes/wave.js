@@ -2,7 +2,7 @@
 // params: { mode: "time"|"superposition",
 //           waves: [{type: sine|square|triangle|sawtooth, freq, amp, phase}] }
 // targets: wave0, wave1, wave2, sum
-import { stdMat } from './common.js';
+import { V3, stdMat } from './common.js';
 
 const WAVE_COLORS = [0x38bdf8, 0xf97316, 0x22c55e];
 const SUM_COLOR = 0xe879f9;
@@ -17,7 +17,7 @@ const FN = {
 const SPAN = 8;   // x extent
 const POINTS = 160;
 
-export function build({ THREE, style, params, quality }) {
+export function build({ THREE, style, params, quality, template }) {
   const group = new THREE.Group();
   const mode = params.mode || 'time';
   const waves = (params.waves?.length ? params.waves : [{ type: 'sine', freq: 1, amp: 1 }])

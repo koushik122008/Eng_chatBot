@@ -1,7 +1,7 @@
 // NPN transistor / PN-junction cross-section template.
 // params: { bias: "cutoff"|"active"|"saturation", showDepletionRegion: bool }
 // targets: emitter, base, collector, depletion, electrons (flow), holes (flow)
-import { COLORS, stdMat, makeFlow, makeWire } from './common.js';
+import { V3, COLORS, stdMat, makeFlow, makeWire } from './common.js';
 
 // Depletion-region widths per junction for each bias mode.
 const BIAS_WIDTHS = {
@@ -10,7 +10,7 @@ const BIAS_WIDTHS = {
   saturation: { be: 0.12, bc: 0.14 },
 };
 
-export function build({ THREE, style, params, quality }) {
+export function build({ THREE, style, params, quality, template }) {
   const group = new THREE.Group();
   const bias = params.bias || 'active';
   const showDepletion = params.showDepletionRegion !== false;
@@ -30,16 +30,21 @@ export function build({ THREE, style, params, quality }) {
   };
 
   const emitter = makeRegion(2.0, -1.75, COLORS.nType);
+  emitter.userData.tooltip = `Emitter (N<sup>+</sup>) &bull; I<sub>E</sub> ≈ ${bias === 'active' ? '1.2' : bias === 'saturation' ? '2.8' : '0.01'} mA`;
   const base = makeRegion(0.9, 0, COLORS.pType);
+  base.userData.tooltip = `Base (P) &bull; I<sub>B</sub> ≈ ${bias === 'active' ? '12' : bias === 'saturation' ? '45' : '0.1'} µA`;
   const collector = makeRegion(2.0, 1.75, COLORS.nType);
+  collector.userData.tooltip = `Collector (N<sup>+</sup>) &bull; I<sub>C</sub> ≈ ${bias === 'active' ? '1.2' : bias === 'saturation' ? '2.7' : '0.01'} mA`;
 
   // Depletion regions at the two junctions.
   const widths = BIAS_WIDTHS[bias] || BIAS_WIDTHS.active;
   const depletionMat = () => stdMat(0xe2e8f0, { style, opacity: 0.4 });
   const depBE = new THREE.Mesh(new THREE.BoxGeometry(widths.be, H + 0.02, D + 0.02), depletionMat());
   depBE.position.x = -0.45;
+  depBE.userData.tooltip = `B-E Depletion &bull; width: ${widths.be} µm`;
   const depBC = new THREE.Mesh(new THREE.BoxGeometry(widths.bc, H + 0.02, D + 0.02), depletionMat());
   depBC.position.x = 0.45;
+  depBC.userData.tooltip = `B-C Depletion &bull; width: ${widths.bc} µm`;
   depBE.visible = depBC.visible = showDepletion;
   group.add(depBE, depBC);
 

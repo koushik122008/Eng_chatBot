@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.db
+engibuddy.db
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+*.env
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Node / Capacitor (build artifacts, not needed at runtime)
+node_modules/
+android/
+ios/
+.gradle/
+*.apk
+dist/
+
+# Logs
+*.log
+nul
+
+# Tests (not needed in production)
+test_*.py
+backend/test_*.py
+tests/
+
+# Scripts (dev utilities)
+scripts/

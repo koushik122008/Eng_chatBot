@@ -1,7 +1,7 @@
 // Gear train template: 2-4 meshed spur gears demonstrating gear ratios.
 // params: { gears: [{teeth: 6..60}, ...], rpm: 1..120 }
 // targets: gear0, gear1, ... (gear0 is the driver)
-import { COLORS, stdMat } from './common.js';
+import { V3, COLORS, stdMat } from './common.js';
 
 const GEAR_COLORS = [0x38bdf8, 0xf97316, 0x22c55e, 0xe879f9];
 
@@ -51,7 +51,7 @@ function makeGear(THREE, { teeth, radius, color, style, quality }) {
   return g;
 }
 
-export function build({ THREE, style, params, quality }) {
+export function build({ THREE, style, params, quality, template }) {
   const group = new THREE.Group();
   const gearParams = (params.gears?.length >= 2 ? params.gears : [{ teeth: 12 }, { teeth: 24 }])
     .slice(0, 4);

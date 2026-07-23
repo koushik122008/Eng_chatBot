@@ -4,11 +4,14 @@ Replays a canned Claude-style reply (scene spec + anim markers, chopped into
 awkward chunks) through the real route -> parser -> validator -> db -> SSE
 pipeline. Run: python -m backend.test_chat_route
 """
+from dotenv import load_dotenv
+from pathlib import Path
+
 import json
 
 from fastapi.testclient import TestClient
 
-from backend import claude_client, db
+from backend import groq_client, db
 from backend.main import app
 from backend.stream_parser import StreamParser
 
@@ -46,15 +49,14 @@ def _events(response_text: str) -> list[tuple[str, dict]]:
 
 
 def main() -> int:
-    db.DB_PATH.unlink(missing_ok=True)
-    db.init_db()
-    original = claude_client.stream_reply
+    db.reset_db()
+    original = groq_client.stream_reply
     failures = []
     try:
         client = TestClient(app)
 
         # --- happy path ---
-        claude_client.stream_reply = _mock_stream(CANNED_REPLY)
+        groq_client.stream_reply = _mock_stream(CANNED_REPLY)
         r = client.post("/api/chat", json={"message": "explain an NPN transistor in 3D"})
         assert r.status_code == 200, r.status_code
         events = _events(r.text)
@@ -85,12 +87,12 @@ def main() -> int:
               msgs[1]["scene_spec"] and msgs[1]["scene_spec"]["template"] == "npn_transistor")
 
         # --- follow-up in same session ---
-        claude_client.stream_reply = _mock_stream("Sure — a quick follow-up answer.")
+        groq_client.stream_reply = _mock_stream("Sure — a quick follow-up answer.")
         r2 = client.post("/api/chat", json={"message": "thanks", "session_id": session_id})
         check("follow-up ok", r2.status_code == 200 and len(db.get_messages(session_id)) == 4)
 
         # --- invalid scene is rejected but chat continues ---
-        claude_client.stream_reply = _mock_stream(BAD_SCENE_REPLY)
+        groq_client.stream_reply = _mock_stream(BAD_SCENE_REPLY)
         r3 = client.post("/api/chat", json={"message": "bad scene test"})
         ev3 = _events(r3.text)
         k3 = [k for k, _ in ev3]
@@ -103,7 +105,7 @@ def main() -> int:
         check("unknown session 404",
               client.post("/api/chat", json={"message": "x", "session_id": "nope"}).status_code == 404)
     finally:
-        claude_client.stream_reply = original
+        groq_client.stream_reply = original
 
     print(f"\n{'ALL PASS' if not failures else f'{len(failures)} FAILURES: {failures}'}")
     return 1 if failures else 0

@@ -1,0 +1,30 @@
+{
+  "name": "new_project",
+  "version": "1.0.0",
+  "description": "A study-companion chatbot for BTech/engineering students that pairs Claude explanations with **live, interactive 3D models**. Ask about a transistor, a logic gate, a gear train, an oscillator, or a signal — EngiBuddy explains it in chat while a rotatable, zoomable 3D model animates **in sync with the explanation**.",
+  "main": "index.js",
+  "scripts": {
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "cap:copy": "npx cap copy",
+    "test": "python -m backend.test_stream_parser && python -m backend.test_chat_route"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koushik122008/Eng_chatBot.git"
+  },
+  "keywords": [],
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/koushik122008/Eng_chatBot/issues"
+  },
+  "homepage": "https://github.com/koushik122008/Eng_chatBot#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/core": "^8.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.2"
+  }
+}

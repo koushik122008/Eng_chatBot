@@ -1,9 +1,9 @@
 // Spring-mass(-damper) oscillator with real integrated physics.
 // params: { mass: 0.1..100, k: 0.1..1000, damping: 0..10, initialDisplacement: -2..2 }
 // targets: mass, spring, equilibrium
-import { COLORS, stdMat } from './common.js';
+import { V3, COLORS, stdMat } from './common.js';
 
-export function build({ THREE, style, params, quality }) {
+export function build({ THREE, style, params, quality, template }) {
   const group = new THREE.Group();
   const m = params.mass ?? 1;
   const k = params.k ?? 20;

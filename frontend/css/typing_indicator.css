@@ -1,0 +1,96 @@
+/* ========== Typing Indicator ========== */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  max-width: 82%;
+}
+
+.typing-indicator .bubble {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bot-bubble);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  padding: 14px 18px;
+}
+
+.typing-indicator .label {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.typing-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: typingBounce 1.4s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+.typing-dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+/* Glowing pulse effect on typing indicator */
+.typing-indicator::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: typingPulse 2s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+.typing-indicator {
+  position: relative;
+}
+
+@keyframes typingPulse {
+  0%, 100% { opacity: 0.3; transform: scaleX(0.8); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
+/* Light theme adjustments */
+body.light-theme .typing-indicator .bubble {
+  background: var(--bot-bubble);
+  border: 1px solid var(--border);
+}
+
+body.light-theme .typing-dots span {
+  background: var(--accent);
+}
